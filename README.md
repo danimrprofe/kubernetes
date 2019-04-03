@@ -72,7 +72,7 @@ Contestación: http://192.168.99.100:30836
 ```
 Si accedemos a esta URL veremos que está el servidor Tomcat escuchando
 
-## Otros comandos
+## PODs en ejecución
 
 Comprobar cuantos pods tengo en marcha:
 ```
@@ -80,4 +80,124 @@ kubectl get pods
 NAME                                 READY   STATUS    RESTARTS   AGE
 hello-minikube-5857d96c67-nt4x7      1/1     Running   1          6d19h
 tomcat-deployment-5c4b9b9c99-zp7t5   1/1     Running   0          13m
+```
+En este caso vemos que tenemos 2 pods.
+
+Vamos a ver más información de un pod concreto si le pasamos el nombre:
+```
+kubectl describe pods tomcat-deployment-5c4b9b9c99-zp7t5
+Name:               tomcat-deployment-5c4b9b9c99-zp7t5
+Namespace:          default
+Priority:           0
+PriorityClassName:  <none>
+Node:               minikube/10.0.2.15
+Start Time:         Wed, 03 Apr 2019 12:13:19 +0200
+Labels:             app=tomcat
+                    pod-template-hash=5c4b9b9c99
+Annotations:        <none>
+Status:             Running
+IP:                 172.17.0.5
+Controlled By:      ReplicaSet/tomcat-deployment-5c4b9b9c99
+Containers:
+  tomcat:
+    Container ID:   docker://d2a6f90d7b42598dd8971862bcbfb3f56d43acf7f55f1a5f4e2b4ab737050ce6
+    Image:          tomcat:9.0
+    Image ID:       docker-pullable://tomcat@sha256:3f4b2548996ffd6d7984f76557fc4db75f92e155340191f7a7325b1f751d10ac
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 03 Apr 2019 12:14:39 +0200
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-6zhlc (ro)
+```
+## Kubectl exec
+
+Podemos ejecutar un comando dentro de un pod pasándoselo como parámetro.
+En este caso abrimos un shell dentro del pod, que nos puede servir para debuguear.
+
+```
+kubectl exec -it tomcat-deployment-5c4b9b9c99-zp7t5 bash
+root@tomcat-deployment-5c4b9b9c99-zp7t5:/usr/local/tomcat# ls
+BUILDING.txt     LICENSE  README.md      RUNNING.txt  conf     lib   native-jni-lib  webapps
+CONTRIBUTING.md  NOTICE   RELEASE-NOTES  bin          include  logs  temp            work
+root@tomcat-deployment-5c4b9b9c99-zp7t5:/usr/local/tomcat# whoami
+root
+root@tomcat-deployment-5c4b9b9c99-zp7t5:/usr/local/tomcat# uname -r
+4.15.0
+```
+
+## Kubectl run
+
+Podemos utilizarlo para desplegar PODs directamente sin tener que crear un archivo de despliegue.
+
+```
+kubectl run hazelcast --image=hazelcast --port=5701
+deployment.apps/hazelcast created
+```
+
+## Escalado
+
+Nos puede interesar tener más de una instancia de un POD, pero por necesidades de demanda o por disponibilidad, nos
+puede interesar tener réplicas de un POD.
+
+Vamos a ver cómo utilizar esto en aplicaciones stateless. La forma más habitual es especificar el parámetro
+replica en nuestro despliegue.
+
+Podemos hacer varias cosas, entre ellas podemos cambiar el despliegue para que nos cree 4 réplicas del POD.
+
+```
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: tomcat-deployment
+spec:
+  selector:
+    matchLabels:
+      app: tomcat
+  replicas: 4
+ ...
+ ...
+```
+Otra opción es no modificar el despliegue (dejarlo a replicas=1 y ejecutar el comando scale para decirle 
+cuantas réplicas quiero
+
+```
+kubectl scale --replicas=4 deployment/tomcat-deployment
+deployment.extensions/tomcat-deployment scaled
+```
+Ahora tenemos un problema de red, puesto que cuando únicamente teníamos un POD, mapeábamos un puerto suyo
+con uno accesible externamente. Para que los 4 puedan escuchar en el mismo puerto y se repartan las peticiones
+de servicio entre todos, necesitaremos un balanceador de carga.
+
+Utilizaremos un load balancer para exponer un único puerto externo y balancear la carga a los diferentes pods.
+
+```
+kubectl expose deployment tomcat-deployment --type=LoadBalancer --port=8080 --target-port 8080 --name=tomcat-load-balancer
+service/tomcat-load-balancer exposed
+```
+Vamos a ver cómo ha quedado la cosa, mirando la descripción del balanceador que hemos creado:
+```
+kubectl describe service tomcat-load-balancer
+```
+La respuesta nos indica que hemos mapeado el puerto 8080 al 8080 de cada uno de los 4 PODs que tenemos en ejecución. 
+Se encargará de redirigir las peticiones a uno de ellos, repartiendo la carga.
+
+```
+Name:                     tomcat-load-balancer
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=tomcat
+Type:                     LoadBalancer
+IP:                       10.96.43.114
+Port:                     <unset>  8080/TCP
+TargetPort:               8080/TCP
+NodePort:                 <unset>  30854/TCP
+Endpoints:                172.17.0.5:8080,172.17.0.7:8080,172.17.0.8:8080 + 1 more...
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
 ```
