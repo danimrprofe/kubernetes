@@ -168,6 +168,14 @@ cuantas réplicas quiero
 kubectl scale --replicas=4 deployment/tomcat-deployment
 deployment.extensions/tomcat-deployment scaled
 ```
+Veremos que ahora los despliegues nos mostrarán el número de réplicas:
+```
+kubectl get deployments
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+hazelcast           0/1     1            0           29m
+hello-minikube      1/1     1            1           6d20h
+tomcat-deployment   4/4     4            4           53m
+```
 Ahora tenemos un problema de red, puesto que cuando únicamente teníamos un POD, mapeábamos un puerto suyo
 con uno accesible externamente. Para que los 4 puedan escuchar en el mismo puerto y se repartan las peticiones
 de servicio entre todos, necesitaremos un balanceador de carga.
