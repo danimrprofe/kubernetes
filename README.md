@@ -4,7 +4,11 @@ aplicaciones containerizadas sobre un cluster.
 
 # Minikube
 
-Los deployments son una colección de recursos y referencias. Describe:
+Minikube es una herramienta que facilita la ejecución local de Kubernetes. Minikube ejecuta un clúster Kubernetes de un solo nodo dentro de una máquina virtual 
+
+Proporciona una solución sencilla para usuarios que desean probar Kubernetes o desarrollar soluciones sobre él.
+
+Los despliegues (deployments) son una colección de recursos y referencias. Describe:
 * Qué contenedores nos interesan y los describe
 * Indica cómo los contenedores se relacionan
 * Qué se requiere para qué funcionen correctamente
