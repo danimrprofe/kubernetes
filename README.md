@@ -225,3 +225,12 @@ Gracias a kubectl puedo trabajar e interactuar con los diferentes despliegues y:
 * Ver el estado de los rollouts
 * Establecer la imagen para un despliegue
 * Ver el histórico de rollouts
+
+# 10. Etiquetas
+
+Puedo etiquetar diferentes nodos (máquinas), de tal forma que en los despliegues puedo especificar
+en qué tipo de nodos quiero que se despliegue un pod en concreto. Para ello:
+* Etiqueto el nodo o nodos que quiero agrupar
+* Modifico el YAML del despliegue agregando una opción NodeSelector, especificando la etiqueta sobre la 
+que quiero hacer el despliegue.
+* De este modo, el pod sólo se va a ejecutar sobre los nodos que estén etiquetados de este modo.
