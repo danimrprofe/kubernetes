@@ -1,20 +1,6 @@
 # kubernetes
 Es un sistema de gestión y orquestación de conenedores. Ejecuta y gestiona aplicaciones
 aplicaciones containerizadas sobre un cluster.
-# Cluster
-Un cluster es un conjunto de nodos. cada uno de estos nodos puede ser:
-* Una máquina real física
-* Una máquina virtual
-# Nodos worker
-Los nodos worker son máquinas que ejecutan aplicaciones dentro de contenedores. 
-Ejecutan, monitorizan y proveen de servicios a las aplicaciones a través de diferentes componentes:
-* Docker (u otro sistema) ejecuta los contenedores
-* Los kubeletes se comunican con la API del servidor y gestionan los contenedores en su propio nodo
-* Un proxy de red balancea el tráfico entre los diferente componentes
-# Pods
-Se trata de un grupo de uno o más contenedores que comparten almacenamiento y red, y una manera común de utilizarse. Los contenedores dentro de un pod se colocan, programan y ejecutan conjuntamente en un mismo contexto.
-
-Los contenedores dentro de un pod comparten IP y puertos, y se pueden comunicar a través de localhost. Asímismo, los contenedores dentro de un mismo pod suelen compartir volúmenes.
 
 # Minikube
 
@@ -52,7 +38,7 @@ spec:
         - containerPort: 8080
 ```     
 
-# Kubectl
+## 6. Kubectl
 Kubectl nos permite interaccionar con cualquier cluster de Kubernetes, desde un shell.
 
 Aplicar el deployment
@@ -72,7 +58,7 @@ Contestación: http://192.168.99.100:30836
 ```
 Si accedemos a esta URL veremos que está el servidor Tomcat escuchando
 
-## PODs en ejecución
+### PODs en ejecución
 
 Comprobar cuantos pods tengo en marcha:
 ```
@@ -113,7 +99,7 @@ Containers:
     Mounts:
       /var/run/secrets/kubernetes.io/serviceaccount from default-token-6zhlc (ro)
 ```
-## Kubectl exec
+### Kubectl exec
 
 Podemos ejecutar un comando dentro de un pod pasándoselo como parámetro.
 En este caso abrimos un shell dentro del pod, que nos puede servir para debuguear.
@@ -129,7 +115,7 @@ root@tomcat-deployment-5c4b9b9c99-zp7t5:/usr/local/tomcat# uname -r
 4.15.0
 ```
 
-## Kubectl run
+### Kubectl run
 
 Podemos utilizarlo para desplegar PODs directamente sin tener que crear un archivo de despliegue.
 
@@ -137,8 +123,24 @@ Podemos utilizarlo para desplegar PODs directamente sin tener que crear un archi
 kubectl run hazelcast --image=hazelcast --port=5701
 deployment.apps/hazelcast created
 ```
+## 7. Arquitectura de kubernetes
 
-## Escalado
+### Cluster
+Un cluster es un conjunto de nodos. cada uno de estos nodos puede ser:
+* Una máquina real física
+* Una máquina virtual
+### Nodos worker
+Los nodos worker son máquinas que ejecutan aplicaciones dentro de contenedores. 
+Ejecutan, monitorizan y proveen de servicios a las aplicaciones a través de diferentes componentes:
+* Docker (u otro sistema) ejecuta los contenedores
+* Los kubeletes se comunican con la API del servidor y gestionan los contenedores en su propio nodo
+* Un proxy de red balancea el tráfico entre los diferente componentes
+### Pods
+Se trata de un grupo de uno o más contenedores que comparten almacenamiento y red, y una manera común de utilizarse. Los contenedores dentro de un pod se colocan, programan y ejecutan conjuntamente en un mismo contexto.
+
+Los contenedores dentro de un pod comparten IP y puertos, y se pueden comunicar a través de localhost. Asímismo, los contenedores dentro de un mismo pod suelen compartir volúmenes.
+
+## 8. Escalado
 
 Nos puede interesar tener más de una instancia de un POD, pero por necesidades de demanda o por disponibilidad, nos
 puede interesar tener réplicas de un POD.
@@ -209,3 +211,17 @@ Session Affinity:         None
 External Traffic Policy:  Cluster
 Events:                   <none>
 ```
+# 9. Despliegues
+
+Cosas que puedo hacer con despliegues:
+* Crear uno nuevo
+* Actualizar un despliegue existente
+* Aplicar actualizaciones a pods que se estén ejecutando en el cluster
+* Volver a una versión anterior (rollback)
+* Pausar y arrancar un despliegue
+
+Gracias a kubectl puedo trabajar e interactuar con los diferentes despliegues y:
+* Listar despliegues
+* Ver el estado de los rollouts
+* Establecer la imagen para un despliegue
+* Ver el histórico de rollouts
