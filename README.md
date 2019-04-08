@@ -144,7 +144,7 @@ Se trata de un grupo de uno o más contenedores que comparten almacenamiento y r
 
 Los contenedores dentro de un pod comparten IP y puertos, y se pueden comunicar a través de localhost. Asímismo, los contenedores dentro de un mismo pod suelen compartir volúmenes.
 
-## 8. Escalado
+## 8. Escalado y replicación
 
 Nos puede interesar tener más de una instancia de un POD, pero por necesidades de demanda o por disponibilidad, nos
 puede interesar tener réplicas de un POD.
@@ -230,7 +230,7 @@ Gracias a kubectl puedo trabajar e interactuar con los diferentes despliegues y:
 * Establecer la imagen para un despliegue
 * Ver el histórico de rollouts
 
-# 10. Etiquetas
+# 10. Etiquetas y selectores
 
 Puedo etiquetar diferentes nodos (máquinas), de tal forma que en los despliegues puedo especificar
 en qué tipo de nodos quiero que se despliegue un pod en concreto. Para ello:
