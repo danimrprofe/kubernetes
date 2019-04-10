@@ -131,6 +131,8 @@ deployment.apps/hazelcast created
 Un cluster es un conjunto de nodos. cada uno de estos nodos puede ser:
 * Una máquina real física
 * Una máquina virtual
+Pueden existir varios nodos worker, sobre los que se desplegarán los contenedores, y al menos un nodos maestro, que gestionará todo.
+
 ### Nodos worker
 Los nodos worker son máquinas que ejecutan aplicaciones dentro de contenedores. 
 Ejecutan, monitorizan y proveen de servicios a las aplicaciones a través de diferentes componentes:
