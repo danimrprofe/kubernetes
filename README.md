@@ -266,10 +266,20 @@ apt-get install -y kubelet kubeadm kubectl
     systemctl enable docker
 
 ## Paso 4: Inicializamos el nodo master (tardará algunos minutos)
+Iniciamos, pasándole la IP de la interfaz correcta (importantísimo)
 ```
-kubeadm init --apiserver-advertise-address $(hostname -i)
+kubeadm init --apiserver-advertise-address 192.168.205.10
 ```
-Una vez terminado me dirá cómo agregar máquinas al cluster (join)
+Una vez iniciado el cluster, nos devolverá un comando para ejecutar en los nodos worker que queramos agregar al cluster, tal que así:
+
+    kubeadm join 192.168.205.10:6443 --token gsvzsq.3k76aiuuj12dk1fm \
+    --discovery-token-ca-cert-hash sha256:8f478c0f3440f8cf6b108f4a947b8c5d3a6185419c5d23033f378e5d9fc3cf66
+
+Si la liamos, podemos reiniciar en el maestro y volver a iniciar, reseteando el cluster:
+
+    kubeadm reset
+    
+Después de esto, volveríamos a hacer el init en el master y hacer join en los workers.
 
 ## Paso 5: Comandos posteriores (solo nodo master)
 Para empezar a utilizar mi cluster me va apedir ejecutar una serie de comandos
@@ -297,6 +307,19 @@ Deberíamos ver el node1 con estado Ready, si todo va bien.
 
 ## Paso 7: Agregar nodos a la red (nodos worker)
 
-     kubeadm join 192.168.96.2:6443 —token exp6hs.qqlz8r447w3y2r2f —discovery-token-ca-cert-hash sha256:58557d333e05ce6Ic70d8080f94cb0edfe5beldd559634968f832dbl3d929c50
+    kubeadm join 192.168.205.10:6443 --token gsvzsq.3k76aiuuj12dk1fm \
+    --discovery-token-ca-cert-hash sha256:8f478c0f3440f8cf6b108f4a947b8c5d3a6185419c5d23033f378e5d9fc3cf66
 
+Si todo va bién se agregará al cluster y contestará algo como:
 
+    This node has joined the cluster:
+    * Certificate signing request was sent to apiserver and a response was received.
+    * The Kubelet was informed of the new secure connection details.
+
+    Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+
+Nos vamos al master y comprobamos la lista de nodos:
+
+    kubectl --insecure-skip-tls-verify get nodes
+
+Aquí me ha dado un error debido a falta de certificados
