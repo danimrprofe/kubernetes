@@ -215,7 +215,7 @@ Session Affinity:         None
 External Traffic Policy:  Cluster
 Events:                   <none>
 ```
-# 9. Despliegues
+## 9. Despliegues
 
 Cosas que puedo hacer con despliegues:
 * Crear uno nuevo
@@ -230,7 +230,7 @@ Gracias a kubectl puedo trabajar e interactuar con los diferentes despliegues y:
 * Establecer la imagen para un despliegue
 * Ver el histórico de rollouts
 
-# 10. Etiquetas y selectores
+## 10. Etiquetas y selectores
 
 Puedo etiquetar diferentes nodos (máquinas), de tal forma que en los despliegues puedo especificar
 en qué tipo de nodos quiero que se despliegue un pod en concreto. Para ello:
@@ -238,3 +238,71 @@ en qué tipo de nodos quiero que se despliegue un pod en concreto. Para ello:
 * Modifico el YAML del despliegue agregando una opción NodeSelector, especificando la etiqueta sobre la 
 que quiero hacer el despliegue.
 * De este modo, el pod sólo se va a ejecutar sobre los nodos que estén etiquetados de este modo.
+
+# Crear un cluster de kubernetes
+
+Podemos entrar en un sandbox online para probar cosas: https://labs.play-with-k8s.com/
+Nos pedirá logearnos con GitHub. 
+
+## Infraestructura
+
+Creamos 3 MV, una hará de máster y 2 de workers. Las 3 MV serán Ubuntu 16.04 para las pruebas.
+
+## Paso 1: Agregar repositorio k8s
+
+```
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+```
+
+## Paso 2: Instalamos Docker y las herramientas de k8s
+```    
+apt update
+apt install -y docker.io
+apt-get install -y kubelet kubeadm kubectl
+```
+## Paso 3: Agregamos permisos 
+    usermod -aG docker vagrant
+    systemctl enable docker
+
+## 1. Inicializamos el nodo master (tardará algunos minutos)
+```
+kubeadm init --apiserver-advertise-address $(hostname -i)
+```
+Una vez terminado me dirá tres cositas:
+* Para empezar a utilizar mi cluster me va apedir ejecutar una serie de comandos
+* Me recomienda desplegar una red de pods en el cluster
+* Me indica cómo agregar máquinas al cluster.
+
+## 2. Comandos posteriores:
+```
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config 
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+## 3. Inicializar la red de cluster:
+```
+kubectl apply -n kube-system -f \
+"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+```
+Tardará un poquito en levantar los pods, unos 3 minutos. Podemos verlo utilizando:
+```
+kubectl get pods --all-namespaces
+```
+Al final tendremos un nodo desplegado como master:
+```
+kubecetl get nodes
+```
+Deberíamos ver el node1 con estado Ready, si todo va bien.
+
+## 4. Agregar nodos a la red:
+
+kubeadm join 192.168.96.2:6443 —token exp6hs.qqlz8r447w3y2r2f —discovery-token-ca-cert-hash sha256:58557d333e05ce6 Ic70d8080f94cb0edfe5beldd559634968f832dbl3d929c50
+
+
+## 3. Creamos un despliegue de nginx
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/application/nginx-app.yaml
+```
+
