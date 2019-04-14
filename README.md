@@ -265,23 +265,22 @@ apt-get install -y kubelet kubeadm kubectl
     usermod -aG docker vagrant
     systemctl enable docker
 
-## 1. Inicializamos el nodo master (tardará algunos minutos)
+## Paso 4: Inicializamos el nodo master (tardará algunos minutos)
 ```
 kubeadm init --apiserver-advertise-address $(hostname -i)
 ```
-Una vez terminado me dirá tres cositas:
-* Para empezar a utilizar mi cluster me va apedir ejecutar una serie de comandos
-* Me recomienda desplegar una red de pods en el cluster
-* Me indica cómo agregar máquinas al cluster.
+Una vez terminado me dirá cómo agregar máquinas al cluster (join)
 
-## 2. Comandos posteriores:
+## Paso 5: Comandos posteriores (solo nodo master)
+Para empezar a utilizar mi cluster me va apedir ejecutar una serie de comandos
 ```
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config 
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-## 3. Inicializar la red de cluster:
+## Paso 6: Inicializar la red de cluster (nodo master)
+Me recomienda desplegar una red de pods en el cluster:
 ```
 kubectl apply -n kube-system -f \
 "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
@@ -296,13 +295,8 @@ kubecetl get nodes
 ```
 Deberíamos ver el node1 con estado Ready, si todo va bien.
 
-## 4. Agregar nodos a la red:
+## Paso 7: Agregar nodos a la red (nodos worker)
 
-kubeadm join 192.168.96.2:6443 —token exp6hs.qqlz8r447w3y2r2f —discovery-token-ca-cert-hash sha256:58557d333e05ce6 Ic70d8080f94cb0edfe5beldd559634968f832dbl3d929c50
+     kubeadm join 192.168.96.2:6443 —token exp6hs.qqlz8r447w3y2r2f —discovery-token-ca-cert-hash sha256:58557d333e05ce6Ic70d8080f94cb0edfe5beldd559634968f832dbl3d929c50
 
-
-## 3. Creamos un despliegue de nginx
-```
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/application/nginx-app.yaml
-```
 
