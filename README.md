@@ -51,7 +51,7 @@ El deployment se debería guardar en un fichero con extensión YAML, como por ej
 
 Para crear el deployment:
 
-```shell
+```bash
 kubectl apply -f ./deployment.yaml
 contestación: deployment.apps/tomcat-deployment created
 ```
