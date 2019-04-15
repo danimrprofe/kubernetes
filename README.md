@@ -7,7 +7,7 @@ Minikube es una herramienta que facilita la ejecución local de Kubernetes. Mini
 
 Proporciona una solución sencilla para usuarios que desean probar Kubernetes o desarrollar soluciones sobre él.
 
-## Despliegues
+## ¿Qué es un despliegue?
 
 Los despliegues (deployments) son una colección de recursos y referencias. Un despliegue:
 * Describe qué contenedores nos interesan
@@ -15,7 +15,7 @@ Los despliegues (deployments) son una colección de recursos y referencias. Un d
 * Qué se requiere para qué funcionen correctamente
 * Qué hacer si dejan de funcionar correctamente
 
-### Ejemplo de deployment
+## Ejemplo de despliegue
 
 Los deployments se suelen describir en un archivo YAML. 
 
@@ -51,7 +51,7 @@ El deployment se debería guardar en un fichero con extensión YAML, como por ej
 
 Para crear el deployment:
 
-```sh
+```
 kubectl apply -f ./deployment.yaml
 contestación: deployment.apps/tomcat-deployment created
 ```
@@ -67,17 +67,15 @@ Contestación: http://192.168.99.100:30836
 ```
 Si accedemos a esta URL veremos que está el servidor Tomcat escuchando
 
-### PODs en ejecución
+### Listar PODs en ejecución
 
-Comprobar cuantos pods tengo en marcha:
+Podemos comprobar cuantos pods tengo en marcha. En este caso hay dos pods en ejecución
 ```
 kubectl get pods
 NAME                                 READY   STATUS    RESTARTS   AGE
 hello-minikube-5857d96c67-nt4x7      1/1     Running   1          6d19h
 tomcat-deployment-5c4b9b9c99-zp7t5   1/1     Running   0          13m
 ```
-En este caso vemos que tenemos 2 pods.
-
 Vamos a ver más información de un pod concreto si le pasamos el nombre:
 ```
 kubectl describe pods tomcat-deployment-5c4b9b9c99-zp7t5
@@ -108,7 +106,7 @@ Containers:
     Mounts:
       /var/run/secrets/kubernetes.io/serviceaccount from default-token-6zhlc (ro)
 ```
-### Kubectl exec
+### Ejecutar comandos dentro de un pod
 
 Podemos ejecutar un comando dentro de un pod pasándoselo como parámetro.
 En este caso abrimos un shell dentro del pod, que nos puede servir para debuguear.
@@ -124,7 +122,7 @@ root@tomcat-deployment-5c4b9b9c99-zp7t5:/usr/local/tomcat# uname -r
 4.15.0
 ```
 
-### Kubectl run
+### Desplegar PODs sin crear un deployment
 
 Podemos utilizarlo para desplegar PODs directamente sin tener que crear un archivo de despliegue.
 
@@ -132,7 +130,7 @@ Podemos utilizarlo para desplegar PODs directamente sin tener que crear un archi
 kubectl run hazelcast --image=hazelcast --port=5701
 deployment.apps/hazelcast created
 ```
-## 7. Arquitectura de kubernetes
+## Arquitectura de kubernetes
 
 ### Cluster
 Un cluster es un conjunto de nodos. cada uno de estos nodos puede ser:
@@ -151,7 +149,7 @@ Se trata de un grupo de uno o más contenedores que comparten almacenamiento y r
 
 Los contenedores dentro de un pod comparten IP y puertos, y se pueden comunicar a través de localhost. Asímismo, los contenedores dentro de un mismo pod suelen compartir volúmenes.
 
-## 8. Escalado y replicación
+## Escalado y replicación
 
 Nos puede interesar tener más de una instancia de un POD, pero por necesidades de demanda o por disponibilidad, nos
 puede interesar tener réplicas de un POD.
@@ -159,9 +157,11 @@ puede interesar tener réplicas de un POD.
 Vamos a ver cómo utilizar esto en aplicaciones stateless. La forma más habitual es especificar el parámetro
 replica en nuestro despliegue.
 
+### Escalado modificando el despliegue
+
 Podemos hacer varias cosas, entre ellas podemos cambiar el despliegue para que nos cree 4 réplicas del POD.
 
-```
+```yaml
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -174,6 +174,7 @@ spec:
  ...
  ...
 ```
+### Escalado por comando
 Otra opción es no modificar el despliegue (dejarlo a replicas=1 y ejecutar el comando scale para decirle 
 cuantas réplicas quiero
 
@@ -193,12 +194,16 @@ Ahora tenemos un problema de red, puesto que cuando únicamente teníamos un POD
 con uno accesible externamente. Para que los 4 puedan escuchar en el mismo puerto y se repartan las peticiones
 de servicio entre todos, necesitaremos un balanceador de carga.
 
-Utilizaremos un load balancer para exponer un único puerto externo y balancear la carga a los diferentes pods.
+### Crear servicio de balanceo de carga
+
+Crearemos un servicio para utilizar un **load balancer** que explonga un único puerto externo y balancear la carga a los diferentes pods.
 
 ```
 kubectl expose deployment tomcat-deployment --type=LoadBalancer --port=8080 --target-port 8080 --name=tomcat-load-balancer
 service/tomcat-load-balancer exposed
 ```
+Como podemos ver, hemos asignado el balanceador al despliegue **tomcat-deployment**, para que actúe sobre él.
+
 Vamos a ver cómo ha quedado la cosa, mirando la descripción del balanceador que hemos creado:
 ```
 kubectl describe service tomcat-load-balancer
@@ -222,7 +227,12 @@ Session Affinity:         None
 External Traffic Policy:  Cluster
 Events:                   <none>
 ```
-## 9. Despliegues
+Como podemos ver, las peticiones al puerto 8080 de la IP 10.96.43.114 se distribuirán a los endpoints:
+* 172.17.0.5:8080
+* 172.17.0.7:8080
+* etc.
+
+## Qué puedo hacer con despliegues
 
 Cosas que puedo hacer con despliegues:
 * Crear uno nuevo
@@ -237,42 +247,52 @@ Gracias a kubectl puedo trabajar e interactuar con los diferentes despliegues y:
 * Establecer la imagen para un despliegue
 * Ver el histórico de rollouts
 
-## 10. Etiquetas y selectores
+## Etiquetas y selectores
 
 Puedo etiquetar diferentes nodos (máquinas), de tal forma que en los despliegues puedo especificar
 en qué tipo de nodos quiero que se despliegue un pod en concreto. Para ello:
-* Etiqueto el nodo o nodos que quiero agrupar
-* Modifico el YAML del despliegue agregando una opción NodeSelector, especificando la etiqueta sobre la 
+1. Etiqueto el nodo o nodos que quiero agrupar
+2. Modifico el YAML del despliegue agregando una opción NodeSelector, especificando la etiqueta sobre la 
 que quiero hacer el despliegue.
-* De este modo, el pod sólo se va a ejecutar sobre los nodos que estén etiquetados de este modo.
+3. De este modo, el pod sólo se va a ejecutar sobre los nodos que estén etiquetados de este modo.
 
 # Crear un cluster de kubernetes
+
+## Playground para k8s
+
+Crear un cluster de kubernetes puede ser una tarea complicada, por lo que existe la posibilidad de utilizar un entorno de pruebas predefinido.
 
 Podemos entrar en un sandbox online para probar cosas: https://labs.play-with-k8s.com/
 Nos pedirá logearnos con GitHub. 
 
-## Infraestructura
+## Crear un cluster a mano
 
-Creamos 3 MV, una hará de máster y 2 de workers. Las 3 MV serán Ubuntu 16.04 para las pruebas.
+Para este caso creamos 3 MV diferentes:
+* Una hará de nodo máster, que orquestará todo el sistema. 
+* Las otras 2 harán de nodos worker. 
 
-## Paso 1: Agregar repositorio k8s
+Las 3 MV serán Ubuntu 16.04 para las pruebas.
+
+### Paso 1: Agregar repositorio k8s
+k8s no viene por defecto en los repositorios de nuestro SO, por lo que deberemos agregar el enlace al repositorio de k8s para que podamos instalarlo a través del gestor **apt**
 
 ```
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 ```
 
-## Paso 2: Instalamos Docker y las herramientas de k8s
-```    
+### Paso 2: Instalamos Docker y las herramientas de k8s
+Deberemos actualizar la lista de paquets para que nos coja los del repositorio nuevo que acabamos de agregar.
+```bash    
 apt update
 apt install -y docker.io
 apt-get install -y kubelet kubeadm kubectl
 ```
-## Paso 3: Agregamos permisos 
+### Paso 3: Agregamos permisos 
     usermod -aG docker vagrant
     systemctl enable docker
 
-## Paso 4: Inicializamos el nodo master (tardará algunos minutos)
+### Paso 4: Inicializamos el nodo master (tardará algunos minutos)
 Iniciamos, pasándole la IP de la interfaz correcta (importantísimo)
 ```
 kubeadm init --apiserver-advertise-address 192.168.205.10
@@ -288,7 +308,7 @@ Si la liamos, podemos reiniciar en el maestro y volver a iniciar, reseteando el 
     
 Después de esto, volveríamos a hacer el init en el master y hacer join en los workers.
 
-## Paso 5: Comandos posteriores (solo nodo master)
+### Paso 5: Comandos posteriores (solo nodo master)
 Para empezar a utilizar mi cluster me va apedir ejecutar una serie de comandos
 ```
 mkdir -p $HOME/.kube
@@ -296,7 +316,7 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-## Paso 6: Inicializar la red de cluster (nodo master)
+### Paso 6: Inicializar la red de cluster (nodo master)
 Me recomienda desplegar una red de pods en el cluster:
 ```
 kubectl apply -n kube-system -f \
@@ -312,7 +332,7 @@ kubecetl get nodes
 ```
 Deberíamos ver el node1 con estado Ready, si todo va bien.
 
-## Paso 7: Agregar nodos a la red (nodos worker)
+### Paso 7: Agregar nodos a la red (nodos worker)
 
     kubeadm join 192.168.205.10:6443 --token gsvzsq.3k76aiuuj12dk1fm \
     --discovery-token-ca-cert-hash sha256:8f478c0f3440f8cf6b108f4a947b8c5d3a6185419c5d23033f378e5d9fc3cf66
