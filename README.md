@@ -22,7 +22,7 @@ Los deployments se suelen describir en un archivo YAML.
 En el siguiente deployment, tendremos una réplica con un único contenedor, que será la imagen oficial de tomcat 9.0 y 
 que escuchará en el puerto 8080. La imagen del contenedor la descargará de Docker Hub.
 
-```
+```yaml
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
