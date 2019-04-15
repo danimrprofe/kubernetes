@@ -1,21 +1,25 @@
 # kubernetes
-Es un sistema de gestión y orquestación de conenedores. Permite automatizar el despliegue, escalado y gestión de contenedores.
-# Minikube
+Es un sistema de gestión y orquestación de contenedores. Permite automatizar el despliegue, escalado y gestión de contenedores.
+
+## Minikube
 
 Minikube es una herramienta que facilita la ejecución local de Kubernetes. Minikube ejecuta un clúster Kubernetes de un solo nodo dentro de una máquina virtual 
 
 Proporciona una solución sencilla para usuarios que desean probar Kubernetes o desarrollar soluciones sobre él.
 
-Los despliegues (deployments) son una colección de recursos y referencias. Describe:
-* Qué contenedores nos interesan y los describe
-* Indica cómo los contenedores se relacionan
+## Despliegues
+
+Los despliegues (deployments) son una colección de recursos y referencias. Un despliegue:
+* Describe qué contenedores nos interesan
+* Indica cómo os contenedores se relacionan entre ellos
 * Qué se requiere para qué funcionen correctamente
 * Qué hacer si dejan de funcionar correctamente
 
-Se suelen describir en un archivo YAML. Nos descargaremos un proyecto ya hecho con git.
+### Ejemplo de deployment
 
-Un ejemplo es el siguiente:
-Solo tendremos una réplica con 1 contenedor, que será la imagen oficial de tomcat 9.0 y 
+Los deployments se suelen describir en un archivo YAML. 
+
+En el siguiente deployment, tendremos una réplica con un único contenedor, que será la imagen oficial de tomcat 9.0 y 
 que escuchará en el puerto 8080. La imagen del contenedor la descargará de Docker Hub.
 
 ```
@@ -39,12 +43,15 @@ spec:
         ports:
         - containerPort: 8080
 ```     
+El deployment se debería guardar en un fichero con extensión YAML, como por ejemplo **deployment.yaml**
 
-## 6. Kubectl
-Kubectl nos permite interaccionar con cualquier cluster de Kubernetes, desde un shell.
+## Despliegue del deployment
 
-Aplicar el deployment
-```
+**Kubectl** es una herramienta que nos permite interaccionar con cualquier cluster de Kubernetes, desde un shell.
+
+Para crear el deployment:
+
+```shell
 kubectl apply -f ./deployment.yaml
 contestación: deployment.apps/tomcat-deployment created
 ```
